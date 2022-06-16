@@ -5,11 +5,12 @@ package consumption
 
 import (
 	"context"
+	"net/http"
+
 	"github.com/Azure/go-autorest/autorest"
 	"github.com/Azure/go-autorest/autorest/azure"
 	"github.com/Azure/go-autorest/autorest/validation"
 	"github.com/Azure/go-autorest/tracing"
-	"net/http"
 )
 
 // UsageDetailsClient is the consumption management client provides access to consumption resources for Azure
@@ -61,7 +62,7 @@ func NewUsageDetailsClientWithBaseURI(baseURI string, subscriptionID string) Usa
 // specifies a starting point to use for subsequent calls.
 // top - may be used to limit the number of results to the most recent N usageDetails.
 // metric - allows to select different type of cost/usage records.
-func (client UsageDetailsClient) List(ctx context.Context, scope string, expand string, filter string, skiptoken string, top *int32, metric Metrictype) (result UsageDetailsListResultPage, err error) {
+func (client UsageDetailsClient) List(ctx context.Context, scope string, expand string, filter string, skiptoken string, top *int32, metric Metrictype, startDate string, endDate string) (result UsageDetailsListResultPage, err error) {
 	if tracing.IsEnabled() {
 		ctx = tracing.StartSpan(ctx, fqdn+"/UsageDetailsClient.List")
 		defer func() {
@@ -82,7 +83,7 @@ func (client UsageDetailsClient) List(ctx context.Context, scope string, expand 
 	}
 
 	result.fn = client.listNextResults
-	req, err := client.ListPreparer(ctx, scope, expand, filter, skiptoken, top, metric)
+	req, err := client.ListPreparer(ctx, scope, expand, filter, skiptoken, top, metric, startDate, endDate)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "consumption.UsageDetailsClient", "List", nil, "Failure preparing request")
 		return
@@ -109,7 +110,7 @@ func (client UsageDetailsClient) List(ctx context.Context, scope string, expand 
 }
 
 // ListPreparer prepares the List request.
-func (client UsageDetailsClient) ListPreparer(ctx context.Context, scope string, expand string, filter string, skiptoken string, top *int32, metric Metrictype) (*http.Request, error) {
+func (client UsageDetailsClient) ListPreparer(ctx context.Context, scope string, expand string, filter string, skiptoken string, top *int32, metric Metrictype, startDate string, endDate string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
 		"scope": scope,
 	}
@@ -132,6 +133,12 @@ func (client UsageDetailsClient) ListPreparer(ctx context.Context, scope string,
 	}
 	if len(string(metric)) > 0 {
 		queryParameters["metric"] = autorest.Encode("query", metric)
+	}
+	if len(startDate) > 0 {
+		queryParameters["startDate"] = autorest.Encode("query", startDate)
+	}
+	if len(endDate) > 0 {
+		queryParameters["endDate"] = autorest.Encode("query", endDate)
 	}
 
 	preparer := autorest.CreatePreparer(
@@ -182,7 +189,7 @@ func (client UsageDetailsClient) listNextResults(ctx context.Context, lastResult
 }
 
 // ListComplete enumerates all values, automatically crossing page boundaries as required.
-func (client UsageDetailsClient) ListComplete(ctx context.Context, scope string, expand string, filter string, skiptoken string, top *int32, metric Metrictype) (result UsageDetailsListResultIterator, err error) {
+func (client UsageDetailsClient) ListComplete(ctx context.Context, scope string, expand string, filter string, skiptoken string, top *int32, metric Metrictype, startDate string, endDate string) (result UsageDetailsListResultIterator, err error) {
 	if tracing.IsEnabled() {
 		ctx = tracing.StartSpan(ctx, fqdn+"/UsageDetailsClient.List")
 		defer func() {
@@ -193,6 +200,6 @@ func (client UsageDetailsClient) ListComplete(ctx context.Context, scope string,
 			tracing.EndSpan(ctx, sc, err)
 		}()
 	}
-	result.page, err = client.List(ctx, scope, expand, filter, skiptoken, top, metric)
+	result.page, err = client.List(ctx, scope, expand, filter, skiptoken, top, metric, startDate, endDate)
 	return
 }
